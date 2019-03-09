@@ -1,7 +1,7 @@
 package astijanus
 
 type Message struct {
-	Body        *MessageBody       `json:"body,omitempty"`
+	Body        interface{}        `json:"body,omitempty"`
 	Candidate   *MessageCandidate  `json:"candidate,omitempty"`
 	Data        *MessageData       `json:"data,omitempty"`
 	Error       *MessageError      `json:"error,omitempty"`
@@ -13,9 +13,18 @@ type Message struct {
 }
 
 type MessageBody struct {
-	ID         int    `json:"id"`
-	OfferVideo bool   `json:"offer_video"`
-	Request    string `json:"request"`
+	Request string `json:"request"`
+}
+
+type MessageMountpoint struct {
+	MessageBody
+	Mountpoint
+}
+
+type MessageWatch struct {
+	MessageBody
+	ID         int  `json:"id"`
+	OfferVideo bool `json:"offer_video"`
 }
 
 type MessageCandidate struct {

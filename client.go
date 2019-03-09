@@ -56,7 +56,7 @@ func (c *Client) send(ctx context.Context, method, url string, reqPayload interf
 	}
 	defer resp.Body.Close()
 
-	// Process error
+	// Process status code
 	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusBadRequest {
 		err = fmt.Errorf("astijanus: invalid status code %d", resp.StatusCode)
 		return
@@ -64,7 +64,13 @@ func (c *Client) send(ctx context.Context, method, url string, reqPayload interf
 
 	// Unmarshal
 	if err = json.NewDecoder(resp.Body).Decode(&m); err != nil {
-		err = errors.Wrap(err, "astijanus: unmarshaling message failed")
+		err = errors.Wrap(err, "astijanus: unmarshaling response payload failed")
+		return
+	}
+
+	// Check error
+	if m.Error != nil {
+		err = fmt.Errorf("astijanus: error %+v in response payload", *m.Error)
 		return
 	}
 	return

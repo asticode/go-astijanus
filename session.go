@@ -3,8 +3,9 @@ package astijanus
 import (
 	"context"
 	"fmt"
-	"github.com/pkg/errors"
 	"net/http"
+
+	"github.com/pkg/errors"
 )
 
 // Session represents a session
@@ -59,7 +60,7 @@ func (s *Session) Close() error {
 // LongPollCallback represents long poll callbacks indexed by event name
 type LongPollCallbacks struct {
 	StreamingPreparing func(transaction string, jsep *MessageJSEP) error
-	Unknown func(m Message) error
+	Unknown            func(m Message) error
 }
 
 // LongPoll starts long polling
@@ -92,7 +93,7 @@ func (s *Session) longPoll(cbs LongPollCallbacks) (err error) {
 
 	// Check plugin error
 	if m.PluginData.Data.Error != "" {
-		err = errors.Wrapf(err, "astijanus: long poll plugin error %d with message %s", m.PluginData.Plugin, m.PluginData.Data.ErrorCode, m.PluginData.Data.Error)
+		err = errors.Wrapf(err, "astijanus: long poll plugin %s error %d with message %s", m.PluginData.Plugin, m.PluginData.Data.ErrorCode, m.PluginData.Data.Error)
 		return
 	}
 
@@ -101,7 +102,7 @@ func (s *Session) longPoll(cbs LongPollCallbacks) (err error) {
 	case "preparing":
 		// No jsep
 		if m.JSEP == nil {
-			err= errors.New("astijanus: no jsep")
+			err = errors.New("astijanus: no jsep")
 			return
 		}
 
