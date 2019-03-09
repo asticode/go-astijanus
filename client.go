@@ -1,0 +1,71 @@
+package astijanus
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+
+	astihttp "github.com/asticode/go-astitools/http"
+	"github.com/pkg/errors"
+)
+
+// Client represents the client
+type Client struct {
+	addr string
+	s    *astihttp.Sender
+}
+
+// New creates a new client
+func New(c Configuration) *Client {
+	return &Client{
+		addr: c.Addr,
+		s:    astihttp.NewSender(c.Sender),
+	}
+}
+
+func (c *Client) send(ctx context.Context, method, url string, reqPayload interface{}) (m Message, err error) {
+	// Create body
+	var body io.Reader
+	if reqPayload != nil {
+		// Marshal
+		buf := &bytes.Buffer{}
+		if err = json.NewEncoder(buf).Encode(reqPayload); err != nil {
+			err = errors.Wrapf(err, "astijanus: marshaling payload of %s request to %s failed", method, url)
+			return
+		}
+
+		// Set body
+		body = buf
+	}
+
+	// Create request
+	var req *http.Request
+	if req, err = http.NewRequest(method, c.addr+url, body); err != nil {
+		err = errors.Wrapf(err, "astijanus: creating %s request to %s failed", method, url)
+		return
+	}
+
+	// Send
+	var resp *http.Response
+	if resp, err = c.s.SendCtx(ctx, req); err != nil {
+		err = errors.Wrapf(err, "astijanus: sending %s request to %s failed", req.Method, req.URL.Path)
+		return
+	}
+	defer resp.Body.Close()
+
+	// Process error
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusBadRequest {
+		err = fmt.Errorf("astijanus: invalid status code %d", resp.StatusCode)
+		return
+	}
+
+	// Unmarshal
+	if err = json.NewDecoder(resp.Body).Decode(&m); err != nil {
+		err = errors.Wrap(err, "astijanus: unmarshaling message failed")
+		return
+	}
+	return
+}
