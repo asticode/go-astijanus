@@ -8,21 +8,21 @@ import (
 	"io"
 	"net/http"
 
-	astihttp "github.com/asticode/go-astitools/http"
+	"github.com/asticode/go-astikit"
 	"github.com/pkg/errors"
 )
 
 // Client represents the client
 type Client struct {
 	addr string
-	s    *astihttp.Sender
+	s    *astikit.HTTPSender
 }
 
 // New creates a new client
 func New(c Configuration) *Client {
 	return &Client{
 		addr: c.Addr,
-		s:    astihttp.NewSender(c.Sender),
+		s:    astikit.NewHTTPSender(c.Sender),
 	}
 }
 
@@ -43,14 +43,14 @@ func (c *Client) send(ctx context.Context, method, url string, reqPayload interf
 
 	// Create request
 	var req *http.Request
-	if req, err = http.NewRequest(method, c.addr+url, body); err != nil {
+	if req, err = http.NewRequestWithContext(ctx, method, c.addr+url, body); err != nil {
 		err = errors.Wrapf(err, "astijanus: creating %s request to %s failed", method, url)
 		return
 	}
 
 	// Send
 	var resp *http.Response
-	if resp, err = c.s.SendCtx(ctx, req); err != nil {
+	if resp, err = c.s.Send(req); err != nil {
 		err = errors.Wrapf(err, "astijanus: sending %s request to %s failed", req.Method, req.URL.Path)
 		return
 	}

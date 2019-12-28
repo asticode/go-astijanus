@@ -3,7 +3,7 @@ package astijanus
 import (
 	"flag"
 
-	astihttp "github.com/asticode/go-astitools/http"
+	"github.com/asticode/go-astikit"
 )
 
 // Flags
@@ -14,7 +14,7 @@ var (
 // Configuration represents the lib's configuration
 type Configuration struct {
 	Addr   string `toml:"addr"`
-	Sender astihttp.SenderOptions
+	Sender astikit.HTTPSenderOptions
 }
 
 // FlagConfig generates a Configuration based on flags
