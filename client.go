@@ -9,7 +9,6 @@ import (
 	"net/http"
 
 	"github.com/asticode/go-astikit"
-	"github.com/pkg/errors"
 )
 
 // Client represents the client
@@ -33,7 +32,7 @@ func (c *Client) send(ctx context.Context, method, url string, reqPayload interf
 		// Marshal
 		buf := &bytes.Buffer{}
 		if err = json.NewEncoder(buf).Encode(reqPayload); err != nil {
-			err = errors.Wrapf(err, "astijanus: marshaling payload of %s request to %s failed", method, url)
+			err = fmt.Errorf("astijanus: marshaling payload of %s request to %s failed: %w", method, url, err)
 			return
 		}
 
@@ -44,14 +43,14 @@ func (c *Client) send(ctx context.Context, method, url string, reqPayload interf
 	// Create request
 	var req *http.Request
 	if req, err = http.NewRequestWithContext(ctx, method, c.addr+url, body); err != nil {
-		err = errors.Wrapf(err, "astijanus: creating %s request to %s failed", method, url)
+		err = fmt.Errorf("astijanus: creating %s request to %s failed: %w", method, url, err)
 		return
 	}
 
 	// Send
 	var resp *http.Response
 	if resp, err = c.s.Send(req); err != nil {
-		err = errors.Wrapf(err, "astijanus: sending %s request to %s failed", req.Method, req.URL.Path)
+		err = fmt.Errorf("astijanus: sending %s request to %s failed: %w", req.Method, req.URL.Path, err)
 		return
 	}
 	defer resp.Body.Close()
@@ -64,7 +63,7 @@ func (c *Client) send(ctx context.Context, method, url string, reqPayload interf
 
 	// Unmarshal
 	if err = json.NewDecoder(resp.Body).Decode(&m); err != nil {
-		err = errors.Wrap(err, "astijanus: unmarshaling response payload failed")
+		err = fmt.Errorf("astijanus: unmarshaling response payload failed: %w", err)
 		return
 	}
 

@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-
-	"github.com/pkg/errors"
 )
 
 // Mountpoint types
@@ -35,7 +33,7 @@ func (s *Session) NewStreamingHandle() (h *StreamingHandle, err error) {
 	// Attach plugin
 	var id int
 	if id, err = s.attachPlugin("janus.plugin.streaming"); err != nil {
-		err = errors.Wrap(err, "astijanus: attaching streaming plugin failed")
+		err = fmt.Errorf("astijanus: attaching streaming plugin failed: %w", err)
 		return
 	}
 
@@ -47,7 +45,7 @@ func (s *Session) NewStreamingHandle() (h *StreamingHandle, err error) {
 func (h *StreamingHandle) send(reqPayload interface{}) (m Message, err error) {
 	// Send
 	if m, err = h.s.c.send(context.Background(), http.MethodPost, fmt.Sprintf("/%d/%d", h.s.id, h.id), reqPayload); err != nil {
-		err = errors.Wrap(err, "astijanus: sending failed")
+		err = fmt.Errorf("astijanus: sending failed: %w", err)
 		return
 	}
 	return
@@ -82,7 +80,7 @@ func (h *StreamingHandle) CreateMountpoint(m Mountpoint) (err error) {
 		Janus:       "message",
 		Transaction: "create-mountpoint",
 	}); err != nil {
-		err = errors.Wrap(err, "astijanus: sending to streaming handle failed")
+		err = fmt.Errorf("astijanus: sending to streaming handle failed: %w", err)
 		return
 	}
 	return
@@ -102,7 +100,7 @@ func (h *StreamingHandle) Watch(id int) (err error) {
 		Janus:       "message",
 		Transaction: strconv.Itoa(id),
 	}); err != nil {
-		err = errors.Wrap(err, "astijanus: sending to streaming handle failed")
+		err = fmt.Errorf("astijanus: sending to streaming handle failed: %w", err)
 		return
 	}
 	return
@@ -121,7 +119,7 @@ func (h *StreamingHandle) Start(jsep *MessageJSEP) (err error) {
 		Janus:       "message",
 		Transaction: "start",
 	}); err != nil {
-		err = errors.Wrap(err, "astijanus: sending to streaming handle failed")
+		err = fmt.Errorf("astijanus: sending to streaming handle failed: %w", err)
 		return
 	}
 	return
@@ -135,7 +133,7 @@ func (h *StreamingHandle) Trickle(c *MessageCandidate) (err error) {
 		Janus:       "trickle",
 		Transaction: "trickle",
 	}); err != nil {
-		err = errors.Wrap(err, "astijanus: sending to streaming handle failed")
+		err = fmt.Errorf("astijanus: sending to streaming handle failed: %w", err)
 		return
 	}
 	return

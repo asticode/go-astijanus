@@ -2,10 +2,9 @@ package astijanus
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
-
-	"github.com/pkg/errors"
 )
 
 // Session represents a session
@@ -36,7 +35,7 @@ func (c *Client) NewSession(ctx context.Context) (s *Session, err error) {
 		Janus:       "create",
 		Transaction: "create-session",
 	}); err != nil {
-		err = errors.Wrap(err, "astijanus: sending failed")
+		err = fmt.Errorf("astijanus: sending failed: %w", err)
 		return
 	}
 
@@ -76,7 +75,7 @@ func (s *Session) longPoll(cbs LongPollCallbacks) (err error) {
 	// Send
 	var m Message
 	if m, err = s.c.send(s.ctx, http.MethodGet, fmt.Sprintf("/%d", s.id), nil); err != nil {
-		err = errors.Wrap(err, "astijanus: sending failed")
+		err = fmt.Errorf("astijanus: sending failed: %w", err)
 		return
 	}
 
@@ -84,7 +83,7 @@ func (s *Session) longPoll(cbs LongPollCallbacks) (err error) {
 	if m.PluginData == nil || m.PluginData.Data == nil {
 		if cbs.Unknown != nil {
 			if err = cbs.Unknown(m); err != nil {
-				err = errors.Wrap(err, "astijanus: executing callback on unknown long poll event failed")
+				err = fmt.Errorf("astijanus: executing callback on unknown long poll event failed: %w", err)
 				return
 			}
 		}
@@ -93,7 +92,7 @@ func (s *Session) longPoll(cbs LongPollCallbacks) (err error) {
 
 	// Check plugin error
 	if m.PluginData.Data.Error != "" {
-		err = errors.Wrapf(err, "astijanus: long poll plugin %s error %d with message %s", m.PluginData.Plugin, m.PluginData.Data.ErrorCode, m.PluginData.Data.Error)
+		err = fmt.Errorf("astijanus: long poll plugin %s error %d with message %s", m.PluginData.Plugin, m.PluginData.Data.ErrorCode, m.PluginData.Data.Error)
 		return
 	}
 
@@ -109,7 +108,7 @@ func (s *Session) longPoll(cbs LongPollCallbacks) (err error) {
 		// Execute callback
 		if cbs.StreamingPreparing != nil {
 			if err = cbs.StreamingPreparing(m.Transaction, m.JSEP); err != nil {
-				err = errors.Wrap(err, "astijanus: executing callback on streaming preparing long poll event failed")
+				err = fmt.Errorf("astijanus: executing callback on streaming preparing long poll event failed: %w", err)
 				return
 			}
 		}
@@ -125,7 +124,7 @@ func (s *Session) attachPlugin(plugin string) (id int, err error) {
 		Plugin:      plugin,
 		Transaction: "attach-plugin",
 	}); err != nil {
-		err = errors.Wrap(err, "astijanus: sending failed")
+		err = fmt.Errorf("astijanus: sending failed: %w", err)
 		return
 	}
 
