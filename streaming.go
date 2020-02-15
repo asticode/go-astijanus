@@ -63,6 +63,7 @@ type Mountpoint struct {
 	Permanent        bool   `json:"permanent,omitempty"`
 	Type             string `json:"type,omitempty"`
 	Video            bool   `json:"video,omitempty"`
+	VideoFMTP        string `json:"videofmtp,omitempty"`
 	VideoPayloadType int    `json:"videopt,omitempty"`
 	VideoPort        int    `json:"videoport,omitempty"`
 	VideoRTPMap      string `json:"videortpmap,omitempty"`
