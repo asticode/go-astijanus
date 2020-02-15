@@ -54,10 +54,15 @@ type MessagePluginData struct {
 }
 
 type PluginData struct {
-	Error     string        `json:"error,omitempty"`
-	ErrorCode int           `json:"error_code,omitempty"`
-	Result    *PluginResult `json:"result,omitempty"`
-	Streaming string        `json:"streaming,omitempty"`
+	Error     string           `json:"error,omitempty"`
+	ErrorCode int              `json:"error_code,omitempty"`
+	List      []PluginListItem `json:"list,omitempty"`
+	Result    *PluginResult    `json:"result,omitempty"`
+	Streaming string           `json:"streaming,omitempty"`
+}
+
+type PluginListItem struct {
+	ID int `json:"id"`
 }
 
 const (

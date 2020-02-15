@@ -2,6 +2,7 @@ package astijanus
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -56,11 +57,11 @@ type Mountpoint struct {
 	AudioPayloadType int    `json:"audiopt,omitempty"`
 	AudioPort        int    `json:"audioport,omitempty"`
 	AudioRTPMap      string `json:"audiortpmap,omitempty"`
-	Description      string `json:"description"`
-	ID               int    `json:"id"`
-	Name             string `json:"name"`
+	Description      string `json:"description,omitempty"`
+	ID               int    `json:"id,omitempty"`
+	Name             string `json:"name,omitempty"`
 	Permanent        bool   `json:"permanent,omitempty"`
-	Type             string `json:"type"`
+	Type             string `json:"type,omitempty"`
 	Video            bool   `json:"video,omitempty"`
 	VideoPayloadType int    `json:"videopt,omitempty"`
 	VideoPort        int    `json:"videoport,omitempty"`
@@ -68,7 +69,7 @@ type Mountpoint struct {
 }
 
 // Create creates a new mountpoint
-func (h *StreamingHandle) CreateMountpoint(m Mountpoint) (err error) {
+func (h *StreamingHandle) Create(m Mountpoint) (err error) {
 	// Send
 	if _, err = h.send(Message{
 		Body: MessageMountpoint{
@@ -78,7 +79,54 @@ func (h *StreamingHandle) CreateMountpoint(m Mountpoint) (err error) {
 			Mountpoint: m,
 		},
 		Janus:       "message",
-		Transaction: "create-mountpoint",
+		Transaction: "create",
+	}); err != nil {
+		err = fmt.Errorf("astijanus: sending to streaming handle failed: %w", err)
+		return
+	}
+	return
+}
+
+// List lists all mountpoint ids
+func (h *StreamingHandle) List() (ms []int, err error) {
+	// Send
+	var m Message
+	if m, err = h.send(Message{
+		Body: MessageBody{
+			Request: "list",
+		},
+		Janus:       "message",
+		Transaction: "list",
+	}); err != nil {
+		err = fmt.Errorf("astijanus: sending to streaming handle failed: %w", err)
+		return
+	}
+
+	// Check list
+	if m.PluginData == nil || m.PluginData.Data == nil {
+		err = errors.New("main: no list in plugin data")
+		return
+	}
+
+	// Loop through list items
+	for _, v := range m.PluginData.Data.List {
+		ms = append(ms, v.ID)
+	}
+	return
+}
+
+// Destroy deletes a mountpoint
+func (h *StreamingHandle) Destroy(id int) (err error) {
+	// Send
+	if _, err = h.send(Message{
+		Body: MessageMountpoint{
+			MessageBody: MessageBody{
+				Request: "destroy",
+			},
+			Mountpoint: Mountpoint{ID: id},
+		},
+		Janus:       "message",
+		Transaction: "destroy",
 	}); err != nil {
 		err = fmt.Errorf("astijanus: sending to streaming handle failed: %w", err)
 		return
