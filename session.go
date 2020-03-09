@@ -31,10 +31,10 @@ func newSession(ctx context.Context, id int, c *Client) (s *Session) {
 func (c *Client) NewSession(ctx context.Context) (s *Session, err error) {
 	// Send
 	var m Message
-	if m, err = c.send(context.Background(), http.MethodPost, "", Message{
+	if err = c.send(context.Background(), http.MethodPost, "", Message{
 		Janus:       "create",
 		Transaction: "create-session",
-	}); err != nil {
+	}, &m); err != nil {
 		err = fmt.Errorf("astijanus: sending failed: %w", err)
 		return
 	}
@@ -74,7 +74,7 @@ func (s *Session) LongPoll(cbs LongPollCallbacks) (err error) {
 func (s *Session) longPoll(cbs LongPollCallbacks) (err error) {
 	// Send
 	var m Message
-	if m, err = s.c.send(s.ctx, http.MethodGet, fmt.Sprintf("/%d", s.id), nil); err != nil {
+	if err = s.c.send(s.ctx, http.MethodGet, fmt.Sprintf("/%d", s.id), nil, &m); err != nil {
 		err = fmt.Errorf("astijanus: sending failed: %w", err)
 		return
 	}
@@ -119,11 +119,11 @@ func (s *Session) longPoll(cbs LongPollCallbacks) (err error) {
 func (s *Session) attachPlugin(plugin string) (id int, err error) {
 	// Send
 	var m Message
-	if m, err = s.c.send(context.Background(), http.MethodPost, fmt.Sprintf("/%d", s.id), Message{
+	if err = s.c.send(context.Background(), http.MethodPost, fmt.Sprintf("/%d", s.id), Message{
 		Janus:       "attach",
 		Plugin:      plugin,
 		Transaction: "attach-plugin",
-	}); err != nil {
+	}, &m); err != nil {
 		err = fmt.Errorf("astijanus: sending failed: %w", err)
 		return
 	}

@@ -25,7 +25,7 @@ func New(c Configuration) *Client {
 	}
 }
 
-func (c *Client) send(ctx context.Context, method, url string, reqPayload interface{}) (m Message, err error) {
+func (c *Client) send(ctx context.Context, method, url string, reqPayload, respPayload interface{}) (err error) {
 	// Create body
 	var body io.Reader
 	if reqPayload != nil {
@@ -61,15 +61,32 @@ func (c *Client) send(ctx context.Context, method, url string, reqPayload interf
 		return
 	}
 
-	// Unmarshal
-	if err = json.NewDecoder(resp.Body).Decode(&m); err != nil {
-		err = fmt.Errorf("astijanus: unmarshaling response payload failed: %w", err)
-		return
-	}
+	// Unmarshal body
+	if respPayload != nil {
+		// Unmarshal
+		if err = json.NewDecoder(resp.Body).Decode(respPayload); err != nil {
+			err = fmt.Errorf("astijanus: unmarshaling response payload failed: %w", err)
+			return
+		}
 
-	// Check error
-	if m.Error != nil {
-		err = fmt.Errorf("astijanus: error %+v in response payload", *m.Error)
+		// Check error
+		if m, ok := respPayload.(*Message); ok && m.Error != nil {
+			err = fmt.Errorf("astijanus: error %+v in response payload", m.Error)
+			return
+		}
+	}
+	return
+}
+
+type Info struct {
+	Name    string `json:"name"`
+	Version int    `json:"version"`
+}
+
+func (c *Client) Info(ctx context.Context) (i Info, err error) {
+	// Send
+	if err = c.send(ctx, http.MethodGet, "/info", nil, &i); err != nil {
+		err = fmt.Errorf("astijanus: sending failed: %w", err)
 		return
 	}
 	return

@@ -1,10 +1,8 @@
 package astijanus
 
 import (
-	"context"
 	"errors"
 	"fmt"
-	"net/http"
 	"strconv"
 )
 
@@ -18,35 +16,16 @@ const (
 
 // StreamingHandle represents a streaming handle
 type StreamingHandle struct {
-	id int
-	s  *Session
+	*pluginHandle
 }
 
-func newStreamingHandle(id int, s *Session) *StreamingHandle {
-	return &StreamingHandle{
-		id: id,
-		s:  s,
-	}
-}
-
-// NewStreamingHandle creates a new plugin handle
 func (s *Session) NewStreamingHandle() (h *StreamingHandle, err error) {
-	// Attach plugin
-	var id int
-	if id, err = s.attachPlugin("janus.plugin.streaming"); err != nil {
-		err = fmt.Errorf("astijanus: attaching streaming plugin failed: %w", err)
-		return
-	}
+	// Create streaming handle
+	h = &StreamingHandle{}
 
-	// Create handle
-	h = newStreamingHandle(id, s)
-	return
-}
-
-func (h *StreamingHandle) send(reqPayload interface{}) (m Message, err error) {
-	// Send
-	if m, err = h.s.c.send(context.Background(), http.MethodPost, fmt.Sprintf("/%d/%d", h.s.id, h.id), reqPayload); err != nil {
-		err = fmt.Errorf("astijanus: sending failed: %w", err)
+	// Create plugin handle
+	if h.pluginHandle, err = s.newPluginHandle("streaming"); err != nil {
+		err = fmt.Errorf("astijanus: creating plugin handle failed: %w", err)
 		return
 	}
 	return
